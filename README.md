@@ -1,79 +1,134 @@
-# Scribe Auth Node
+# Scribe Private Information (MI) SDK
 
-Most calls to Scribe's API require authentication and authorization. This library simplifies this process.
+A Node library designed to facilitate accessing Scribe's Private Information (MI) API.
 
-You first need a Scribe account and a client ID. Both can be requested at support[atsign]scribelabs[dotsign]ai or through Intercom on https://platform.scribelabs.ai if you already have a Scribe account.
+## Usage
 
-This library interacts directly with our authentication provider [AWS Cognito](https://aws.amazon.com/cognito/) meaning that your username and password never transit through our servers.
+### Construct client
 
-## Installation
-
-Add the dependency to your package.json and save it:
+The constructor expects an environment object:
 
 ```
-"dependencies": {
-	"@scribelabsai/auth": ">=1.0.0"
-}
+const EnvironmentSchema = object({
+  API_URL: string(),
+  IDENTITY_POOL_ID: string(),
+  USER_POOL_ID: string(),
+  CLIENT_ID: string(),
+  REGION: string(),
+});
 ```
 
-Install it from command line:
+The `API_URL` is `"mi.scribelabs.ai/v1"`.
 
-```
-npm install
-```
+The `REGION` is `"eu-west-2"`.
 
-## Requirements
+Contact Scribe to obtain other details required for authentication.
 
-This library requires Node.js >= 16.20.0
+```TypeScript
+import { ScribeMIClient } from '@scribelabsai/mi';
 
-## Methods
-
-### 1. Changing password
-
-```javascript
-import { Auth, Tokens } from '@scribelabsai/auth';
-const access = new Auth(clientId);
-access.changePassword('username', 'password', 'newPassword');
+const client = new ScribeMIClient({
+  API_URL: 'mi.scribelabs.ai/v1',
+  REGION: 'eu-west-2',
+  IDENTITY_POOL_ID: 'Contact Scribe for authentication details',
+  USER_POOL_ID: 'Contact Scribe for authentication details',
+  CLIENT_ID: 'Contact Scribe for authentication details',
+});
 ```
 
-### 2. Recovering an account in case of forgotten password
+### Authenticate
 
-```javascript
-import { Auth, Tokens } from '@scribelabsai/auth';
-const access = new Auth(clientId);
-access.forgotPassword('username', 'password', 'confirmationCode');
+Authentication is handled by [Scribe's Auth library](https://github.com/ScribeLabsAI/ScribeAuthNode/blob/master/README.md), without the need for you to call that library directly.
+
+```TypeScript
+// Authenticate with username / password
+await client.authenticate({ username: 'myUsername', password: 'myPassword' });
+
+// OR with refresh token
+await client.authenticate({ refreshToken: 'myRefreshToken' });
 ```
 
-### 3. Get or generate tokens
+The MI client will try to automatically re-authenticate with your refresh token, if you try to make an API call after credentials have expired.
 
-##### With username and password
+### Submit a document for processing
 
-```javascript
-import { Auth, Tokens } from '@scribelabsai/auth';
-const access = new Auth(clientId);
-access.getTokens({ username: 'username', password: 'password' });
+```TypeScript
+const jobid: string = await client.submitTask(myFileBuffer, {
+  filetype: 'pdf',
+  filename: 'example-co-2023-q1.pdf',
+  companyname: 'Example Co Ltd',
+});
 ```
 
-##### With refresh token
+The `filetype` parameter is required: it should match the file's extension / MIME type.
 
-```javascript
-import { Auth, Tokens } from '@scribelabsai/auth';
-const access = new Auth(clientId);
-access.getTokens({ refreshToken: 'refreshToken' });
+Other parameters are optional:
+
+- `filename` is recommended: it should be the name of the uploaded file. It appears in API responses and the web UI.
+- `companyname` can optionally be included for company Financials data: it should be the legal name of the company this document describes, so that documents relating to the same company can be collated.
+
+The returned `jobid` can be used to find information about the task status via `getTask`, or via the web UI.
+
+### View tasks
+
+Fetch details of an individual task:
+
+```TypeScript
+const task: MITask = await client.getTask(jobid);
+console.log(task.status);
 ```
 
-### 4. Revoking a refresh token
+Or list all tasks:
 
-#### Disclaimer: revokeToken(refreshToken) is not ready yet, you may use our [Python lib](https://github.com/ScribeLabsAI/ScribeAuth) or call AWS services directly.
+```TypeScript
+const tasks: MITask[] = await client.listTasks();
+```
 
-## Flow
+### Export output models
 
-- If you never have accessed your Scribe account, it probably still contains the temporary password we generated for you. You can change it directly on the [platform](https://platform.scribelabs.ai) or with the `changePassword` method. You won't be able to access anything else until the temporary password has been changed.
+After documents have been processed by Scribe, the task status (which can be seen via `getTask` / `listTasks`) is `"SUCCESS"`. At this point, you can export the model:
 
-- Once the account is up and running, you can request new tokens with `getTokens`. You will initially have to provide your username and password. The access and id tokens are valid for up to 30 minutes. The refresh token is valid for 30 days.
+```TypeScript
+const task = await client.getTask(jobid);
 
-- While you have a valid refresh token, you can request fresh access and id tokens with `getTokens` but using the refresh token this time, so you're not sending your username and password over the wire anymore.
+// Use fetchModel
+const model: MIModel = await fetchModel(task);
 
----
+// Alternatively, fetch the model directly from its URL
+return model.modelUrl;
+```
 
-To flag an issue, open a ticket on [Github](https://github.com/ScribeLabsAI/ScribeAuthNode/issues) and contact us on Intercom through the platform.
+In either case, note that the model is accessed via a pre-signed URL, which is only valid for a limited time after calling `getTask` / `listTasks`.
+
+#### Collate fund data
+
+When using Scribe to process fund data, multiple models can be consolidated for export in a single file:
+
+```TypeScript
+const tasks = await client.listTasks();
+const tasksToCollate = tasks.filter(
+  (task) => task.status === 'SUCCESS' && task.originalFilename.startsWith('Fund_1')
+);
+
+const collatedModel = await client.consolidateTasks(tasksToCollate);
+```
+
+### Delete tasks / cancel processing
+
+```TypeScript
+const task = await client.getTask(jobid);
+
+await client.deleteTask(task);
+```
+
+Deletion is irreversible.
+
+After a successful deletion, the file, any output model, and any other file derived from the input are deleted permanently from Scribe's servers.
+
+## See also
+
+Documentation for the underlying REST API may also be useful, although we recommend accessing the API via this library or our Python SDK.
+
+- [REST API documentation](https://scribelabs.ai/docs/docs-mi)
+
+- [Python SDK](https://github.com/ScribeLabsAI/ScribeMi)

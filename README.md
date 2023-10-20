@@ -95,7 +95,7 @@ const task = await client.getTask(jobid);
 const model: MIModel = await fetchModel(task);
 
 // Alternatively, fetch the model directly from its URL
-return model.modelUrl;
+return task.modelUrl;
 ```
 
 In either case, note that the model is accessed via a pre-signed URL, which is only valid for a limited time after calling `getTask` / `listTasks`.

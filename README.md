@@ -92,7 +92,7 @@ After documents have been processed by Scribe, the task status (which can be see
 const task = await client.getTask(jobid);
 
 // Use fetchModel
-const model: MIModel = await fetchModel(task);
+const model: MIModel = await client.fetchModel(task);
 
 // Alternatively, fetch the model directly from its URL
 return task.modelUrl;

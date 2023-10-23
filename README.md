@@ -1,6 +1,6 @@
-# Scribe Private Information (MI) SDK
+# Scribe Private Documents (MI) SDK
 
-A Node library designed to facilitate accessing Scribe's Private Information (MI) API.
+A Node library designed to facilitate accessing Scribe's Private Documents (MI) API.
 
 ## Usage
 

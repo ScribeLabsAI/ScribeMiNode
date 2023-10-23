@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.0.2](https://github.com/ScribeLabsAI/ScribeMiNode/compare/1.0.1...1.0.2) (2023-10-23)
+
+
+### Bug Fixes
+
+* npm publish public ([5c93d0c](https://github.com/ScribeLabsAI/ScribeMiNode/commit/5c93d0cfc65462b98a456fef2f2d8d71bff0c5e3))
+
 ## [1.0.1](https://github.com/ScribeLabsAI/ScribeMiNode/compare/1.0.0...1.0.1) (2023-10-23)
 
 

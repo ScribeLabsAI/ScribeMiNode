@@ -2,6 +2,12 @@
 
 A Node library designed to facilitate accessing Scribe's Private Documents (MI) API.
 
+## Installation
+
+```
+npm install @scribelabsai/mi
+```
+
 ## Usage
 
 ### Construct client

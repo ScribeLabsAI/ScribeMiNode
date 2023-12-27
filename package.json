@@ -13,7 +13,7 @@
   "scripts": {
     "build": "tsc",
     "check": "tsc --noEmit",
-    "test": "NODE_OPTIONS='--experimental-vm-modules' vitest run",
+    "test": "npx vitest run --passWithNoTests --logHeapUsage",
     "changelog": "git log --pretty=\"format:%s\" --decorate=no $(git describe --tags --abbrev=0 @^)..@ > Changelog.md"
   },
   "author": "Alex Bostock <alex@scribelabs.ai>",

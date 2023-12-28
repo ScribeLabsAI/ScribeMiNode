@@ -47,7 +47,7 @@ const MITaskSchema = object({
   modelFilename: string().optional(),
   status: zenum(['SUCCESS', 'DELETED', 'PENDING_UPLOAD', 'PROCESSING']),
   submitted: number().int().positive(),
-  modelUrl: string().optional(),
+  modelUrl: string().url().optional(),
 }).strict();
 export type MITask = zinfer<typeof MITaskSchema>;
 

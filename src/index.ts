@@ -28,6 +28,10 @@ export class ScribeMIClient {
   credentials: Credentials | undefined;
   fetch: typeof fetch | undefined;
 
+  /**
+   * Construct an MI client.
+   * @param env - Environment vars
+   */
   constructor(env: Environment) {
     this.env = env;
     this.authClient = new Auth({
@@ -37,6 +41,14 @@ export class ScribeMIClient {
     });
   }
 
+  /**
+   * To authenticate a user.
+   * @param param - Username and password OR refreshToken.
+   * @param param.username - usually an email address.
+   * @param param.password - associated with this username.
+   *                   OR
+   * @param param.refreshToken - Refresh token to use.
+   */
   async authenticate(param: UsernamePassword | RefreshToken) {
     this.tokens = await this.authClient.getTokens(param);
     this.userId = await this.authClient.getFederatedId(this.tokens.idToken);
@@ -55,6 +67,9 @@ export class ScribeMIClient {
     });
   }
 
+  /**
+   * To reauthenticate a user without sending parameters. Must be called after authenticate.
+   */
   async reauthenticate() {
     if (!this.tokens || !this.userId) {
       throw new Error('Must authenticate before reauthenticating');
@@ -75,6 +90,14 @@ export class ScribeMIClient {
     });
   }
 
+  /**
+   * To call an endpoint.
+   * @param path - URL path to use, not including any prefix.
+   * @param outputSchema - The schema to validate the output against.
+   * @param args - Additional arguments to pass.
+   * @returns JSON response.
+   * @hidden
+   */
   async callEndpoint<T>(path: string, outputSchema: ZodType<T>, args?: RequestInit): Promise<T> {
     if (!this.fetch || !this.credentials) {
       throw new Error('Not authenticated');
@@ -95,6 +118,11 @@ export class ScribeMIClient {
     }
   }
 
+  /**
+   * To list the tasks.
+   * @param companyName - List tasks for a specific company.
+   * @returns List of tasks.
+   */
   async listTasks(companyName?: string): Promise<MITask[]> {
     const params = new URLSearchParams();
     params.append('includePresigned', 'true');
@@ -108,10 +136,20 @@ export class ScribeMIClient {
     return tasks;
   }
 
+  /**
+   * To get a task by jobid.
+   * @param jobid - Jobid of the task to get.
+   * @returns A task.
+   */
   async getTask(jobid: string): Promise<MITask> {
     return await this.callEndpoint(`/tasks/${jobid}`, GetMIOutputSchema);
   }
 
+  /**
+   * Fetch the model for a task.
+   * @param task - Task to fetch the model for.
+   * @returns Model.
+   */
   async fetchModel(task: MITask): Promise<MIModel> {
     if (!task.modelUrl) {
       throw new Error(`Cannot load model for task ${task.jobid}: model is not ready to export`);
@@ -125,6 +163,11 @@ export class ScribeMIClient {
     }
   }
 
+  /**
+   * To consolidate tasks.
+   * @param tasks - List of tasks to consolidate.
+   * @returns Consolidated model.
+   */
   async consolidateTasks(tasks: MITask[]): Promise<MICollatedModelFundPerformance> {
     const params = new URLSearchParams({
       jobids: tasks.map((task) => task.jobid).join(';'),
@@ -136,6 +179,15 @@ export class ScribeMIClient {
     return model;
   }
 
+  /**
+   * To submit a task.
+   * @param file - File to upload.
+   * @param props - The properties of the file.
+   * @param props.filetype - Type of file to submit.
+   * @param props.filename - Name of the file to submit.
+   * @param props.companyname - Name of the company to submit the file for.
+   * @returns Jobid of the task.
+   */
   async submitTask(
     file: Buffer,
     props: { filetype: MIFileType; filename?: string; companyname?: string }
@@ -157,6 +209,11 @@ export class ScribeMIClient {
     return jobid;
   }
 
+  /**
+   * To delete a task.
+   * @param task - Task to delete.
+   * @returns MITask deleted.
+   */
   async deleteTask(task: MITask) {
     return await this.callEndpoint(`/tasks/${task.jobid}`, DeleteMIOutputSchema, {
       method: 'DELETE',

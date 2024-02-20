@@ -1,0 +1,40 @@
+name: Test
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+    types: [opened, synchronize, reopened]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone
+        uses: actions/checkout@v4
+      - uses: actions/setup-python@v4
+        with:
+          python-version: '3.10'
+          cache: 'pip'
+      - name: Install deps
+        run: pip install -r requirements.txt
+      - name: Run tests
+        run: python -m coverage run -m pytest
+        env:
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          USERNAME: ${{ secrets.USERNAME }}
+          PASSWORD: ${{ secrets.PASSWORD }}
+          OTPCODE: ${{ secrets.OTPCODE }}
+          USER_POOL_ID: ${{ secrets.USER_POOL_ID }}
+          IDENTITY_POOL_ID: ${{ secrets.IDENTITY_POOL_ID }}
+          API_URL: ${{ secrets.API_URL }}
+          REGION: ${{ secrets.REGION }}
+      - name: Publish code coverage
+        uses: paambaati/codeclimate-action@v5.0.0
+        env:
+          CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
+        with:
+          coverageCommand: coverage xml

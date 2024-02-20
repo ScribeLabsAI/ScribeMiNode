@@ -1,11 +1,4 @@
-import {
-  Auth,
-  Challenge,
-  Credentials,
-  RefreshToken,
-  Tokens,
-  UsernamePassword,
-} from '@scribelabsai/auth';
+import { Auth, Credentials, RefreshToken, UsernamePassword } from '@scribelabsai/auth';
 import { createSignedFetcher } from 'aws-sigv4-fetch';
 import Base64 from 'crypto-js/enc-base64';
 import Hex from 'crypto-js/enc-hex';
@@ -34,7 +27,7 @@ const ErrorSchema = object({
 export class ScribeMIClient {
   readonly env: Environment;
   readonly authClient: Auth;
-  tokens: Tokens | Challenge | undefined;
+  tokens: Awaited<ReturnType<Auth['getTokens']>> | undefined;
   userId: string | undefined;
   credentials: Credentials | undefined;
   fetch: typeof fetch | undefined;

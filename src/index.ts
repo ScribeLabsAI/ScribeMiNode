@@ -1,4 +1,11 @@
-import { Auth, Credentials, RefreshToken, Tokens, UsernamePassword } from '@scribelabsai/auth';
+import {
+  Auth,
+  Challenge,
+  Credentials,
+  RefreshToken,
+  Tokens,
+  UsernamePassword,
+} from '@scribelabsai/auth';
 import { createSignedFetcher } from 'aws-sigv4-fetch';
 import Base64 from 'crypto-js/enc-base64';
 import Hex from 'crypto-js/enc-hex';
@@ -27,7 +34,7 @@ const ErrorSchema = object({
 export class ScribeMIClient {
   readonly env: Environment;
   readonly authClient: Auth;
-  tokens: Tokens | undefined;
+  tokens: Tokens | Challenge | undefined;
   userId: string | undefined;
   credentials: Credentials | undefined;
   fetch: typeof fetch | undefined;
@@ -43,6 +50,9 @@ export class ScribeMIClient {
 
   async authenticate(param: UsernamePassword | RefreshToken) {
     this.tokens = await this.authClient.getTokens(param);
+    if ('challengeName' in this.tokens) {
+      throw new Error('Challenge not supported');
+    }
     this.userId = await this.authClient.getFederatedId(this.tokens.idToken);
     this.credentials = await this.authClient.getFederatedCredentials(
       this.userId,
@@ -63,7 +73,13 @@ export class ScribeMIClient {
     if (!this.tokens || !this.userId) {
       throw new Error('Must authenticate before reauthenticating');
     }
+    if ('challengeName' in this.tokens) {
+      throw new Error('Challenge not supported');
+    }
     this.tokens = await this.authClient.getTokens({ refreshToken: this.tokens.refreshToken });
+    if ('challengeName' in this.tokens) {
+      throw new Error('Challenge not supported');
+    }
     this.credentials = await this.authClient.getFederatedCredentials(
       this.userId,
       this.tokens.idToken

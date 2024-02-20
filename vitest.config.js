@@ -1,9 +1,13 @@
-import { defineConfig } from 'vite';
+import { defineConfig } from 'vitest/config';
 
 export default defineConfig({
   test: {
-    alias: {
-      '^(\\.{1,2}/.*)\\.js$': '$1',
+    coverage: {
+      all: true,
+      provider: 'v8',
+      reporter: ['clover', 'text'],
+      include: ['src/**'],
+      enabled: true,
     },
     testTimeout: 20_000,
   },

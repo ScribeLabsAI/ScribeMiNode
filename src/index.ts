@@ -1,5 +1,9 @@
-import { Auth, Credentials, RefreshToken, Tokens, UsernamePassword } from '@scribelabsai/auth';
+import { Auth, Credentials, RefreshToken, UsernamePassword } from '@scribelabsai/auth';
 import { createSignedFetcher } from 'aws-sigv4-fetch';
+import Base64 from 'crypto-js/enc-base64';
+import Hex from 'crypto-js/enc-hex';
+import WordArray from 'crypto-js/lib-typedarrays';
+import MD5 from 'crypto-js/md5';
 import { object, string, type ZodType } from 'zod';
 import { type Environment } from './envSchema.js';
 import {
@@ -23,7 +27,7 @@ const ErrorSchema = object({
 export class ScribeMIClient {
   readonly env: Environment;
   readonly authClient: Auth;
-  tokens: Tokens | undefined;
+  tokens: Awaited<ReturnType<Auth['getTokens']>> | undefined;
   userId: string | undefined;
   credentials: Credentials | undefined;
   fetch: typeof fetch | undefined;
@@ -39,6 +43,9 @@ export class ScribeMIClient {
 
   async authenticate(param: UsernamePassword | RefreshToken) {
     this.tokens = await this.authClient.getTokens(param);
+    if ('challengeName' in this.tokens) {
+      throw new Error('Challenge not supported');
+    }
     this.userId = await this.authClient.getFederatedId(this.tokens.idToken);
     this.credentials = await this.authClient.getFederatedCredentials(
       this.userId,
@@ -59,7 +66,13 @@ export class ScribeMIClient {
     if (!this.tokens || !this.userId) {
       throw new Error('Must authenticate before reauthenticating');
     }
+    if ('challengeName' in this.tokens) {
+      throw new Error('Challenge not supported');
+    }
     this.tokens = await this.authClient.getTokens({ refreshToken: this.tokens.refreshToken });
+    if ('challengeName' in this.tokens) {
+      throw new Error('Challenge not supported');
+    }
     this.credentials = await this.authClient.getFederatedCredentials(
       this.userId,
       this.tokens.idToken
@@ -118,8 +131,16 @@ export class ScribeMIClient {
       throw new Error(`Cannot load model for task ${task.jobid}: model is not ready to export`);
     }
     const res = await fetch(task.modelUrl);
+    const modelContent = await res.text();
+
+    const md5checksumExpected = res.headers.get('ETag')?.replaceAll('"', '');
+    const md5checksum = Hex.stringify(MD5(modelContent));
+    if (md5checksum !== md5checksumExpected) {
+      throw new Error('Integrity Error: invalid checksum. Please retry.');
+    }
+
     try {
-      return MIModelSchema.parse(await res.json());
+      return MIModelSchema.parse(JSON.parse(modelContent));
     } catch (err) {
       console.log('Model validation failed:', err);
       throw new Error('Model does not match expected format');
@@ -141,9 +162,10 @@ export class ScribeMIClient {
     file: Buffer,
     props: { filetype: MIFileType; filename?: string; companyname?: string }
   ) {
+    const md5checksum = Base64.stringify(MD5(WordArray.create(file)));
     const { jobid, url } = await this.callEndpoint('/tasks', PostSubmitMIOutputSchema, {
       method: 'POST',
-      body: JSON.stringify(props),
+      body: JSON.stringify({ ...props, md5checksum }),
       headers: {
         'Content-Type': 'application/json',
       },
@@ -151,6 +173,9 @@ export class ScribeMIClient {
     const res = await fetch(url, {
       method: 'PUT',
       body: file,
+      headers: {
+        'Content-MD5': md5checksum,
+      },
     });
     if (res.status !== 200) {
       throw new Error(`Failed to upload file: ${res.status} ${res.statusText}`);

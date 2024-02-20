@@ -1,7 +1,7 @@
 module.exports = {
   root: true,
   parser: '@typescript-eslint/parser',
-  plugins: ['@typescript-eslint', 'unicorn', 'sonarjs', 'jest', 'promise'],
+  plugins: ['@typescript-eslint', 'unicorn', 'sonarjs', 'vitest', 'promise'],
   extends: [
     'eslint:recommended',
     'plugin:@typescript-eslint/recommended',
@@ -10,8 +10,7 @@ module.exports = {
     'prettier',
     'plugin:unicorn/all',
     'plugin:sonarjs/recommended',
-    'plugin:jest/recommended',
-    'plugin:jest/style',
+    'plugin:vitest/recommended',
     'plugin:promise/recommended',
   ],
   rules: {

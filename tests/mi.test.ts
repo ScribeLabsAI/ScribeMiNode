@@ -1,11 +1,11 @@
 import { config as configureEnv } from 'dotenv';
 import { readFile } from 'node:fs/promises';
 import { beforeAll, describe, expect, it } from 'vitest';
-import { EnvironmentSchema } from '../src/env-schema.js';
-import { ScribeMIClient } from '../src/index';
+import { EnvironmentSchema } from '../src/envSchema.js';
+import { ScribeMIClient } from '../src/index.js';
 import { type MITask } from '../src/schema.js';
 
-configureEnv();
+configureEnv({ override: true });
 
 const env = EnvironmentSchema.parse(process.env);
 
@@ -28,7 +28,7 @@ describe('auth', () => {
     const client = new ScribeMIClient(env);
     await client.authenticate({ username, password });
     await expect(
-      client.authenticate({ refreshToken: client.tokens!.refreshToken })
+      client.authenticate({ refreshToken: client.tokens?.refreshToken ?? '' })
     ).resolves.not.toThrow();
   });
 

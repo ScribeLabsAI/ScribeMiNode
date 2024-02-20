@@ -47,17 +47,17 @@ const MITaskSchema = object({
   status: zenum(['SUCCESS', 'DELETED', 'PENDING_UPLOAD', 'PROCESSING']),
   submitted: number().int().positive(),
   modelUrl: string().url().optional(),
-}).strict();
+});
 export type MITask = zinfer<typeof MITaskSchema>;
 
 const MIPortfolioItemBaseSchema = object({
   client: string(),
   companyName: string(),
   jobids: JobIdSchema.array(),
-}).strict();
+});
 export const MIPortfolioItemSchema = union([
-  MIPortfolioItemBaseSchema.extend({ modelFilename: string().optional() }).strict(),
-  MIPortfolioItemBaseSchema.extend({ modelUrl: string().url().optional() }).strict(),
+  MIPortfolioItemBaseSchema.extend({ modelFilename: string().optional() }),
+  MIPortfolioItemBaseSchema.extend({ modelUrl: string().url().optional() }),
 ]);
 export type MIPortfolioItem = zinfer<typeof MIPortfolioItemSchema>;
 
@@ -76,10 +76,10 @@ export const ItemSchema = object({
           literal(''),
           string().regex(/^\d+(?:;-?\d+(?:\.\d+)?){4}$/), // page;x;y;w;h
         ]).optional(),
-      }).strict(),
+      }),
     ])
   ),
-}).strict();
+});
 export type Item = zinfer<typeof ItemSchema>;
 
 export const MIModelFinancialsSchema = object({
@@ -87,7 +87,7 @@ export const MIModelFinancialsSchema = object({
   dateReporting: string().regex(/^\d{4}-\d{2}-\d{2}$/),
   covering: string(),
   items: ItemSchema.array(),
-}).strict();
+});
 export type MIModelFinancials = zinfer<typeof MIModelFinancialsSchema>;
 
 export const MIModelFundPerformanceSchema = object({
@@ -97,7 +97,7 @@ export const MIModelFundPerformanceSchema = object({
     columnsOrder: string().array(),
     items: ItemSchema.array(),
   }).array(),
-}).strict();
+});
 export type MIModelFundPerformance = zinfer<typeof MIModelFundPerformanceSchema>;
 
 export const MIModelSchema = union([MIModelFinancialsSchema, MIModelFundPerformanceSchema]);
@@ -112,7 +112,7 @@ export type MICollatedModelFundPerformance = zinfer<typeof MICollatedModelFundPe
 export const PostSubmitMIOutputSchema = object({
   jobid: JobIdSchema,
   url: string().url(),
-}).strict();
+});
 export type PostSubmitMIOutput = zinfer<typeof PostSubmitMIOutputSchema>;
 
 /**************************************/
@@ -120,7 +120,7 @@ export type PostSubmitMIOutput = zinfer<typeof PostSubmitMIOutputSchema>;
 /**************************************/
 export const GetListMIsOutputSchema = object({
   tasks: MITaskSchema.array(),
-}).strict();
+});
 
 /**************************************/
 /**************** GetMI ***************/
@@ -139,7 +139,7 @@ export type DeleteMIOutput = zinfer<typeof DeleteMIOutputSchema>;
 /**************************************/
 export const GetPortfolioFundPerformanceOutputSchema = object({
   model: MIModelFundPerformanceSchema,
-}).strict();
+});
 export type GetPortfolioFundPerformanceOutput = zinfer<
   typeof GetPortfolioFundPerformanceOutputSchema
 >;

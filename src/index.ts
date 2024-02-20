@@ -1,7 +1,7 @@
 import { Auth, Credentials, RefreshToken, Tokens, UsernamePassword } from '@scribelabsai/auth';
 import { createSignedFetcher } from 'aws-sigv4-fetch';
 import { object, string, type ZodType } from 'zod';
-import { type Environment } from './env-schema.js';
+import { type Environment } from './envSchema.js';
 import {
   DeleteMIOutputSchema,
   GetListMIsOutputSchema,
@@ -87,6 +87,7 @@ export class ScribeMIClient {
       return outputSchema.parse(await res.json());
     } else {
       const parsedError = ErrorSchema.safeParse(await res.json());
+      // eslint-disable-next-line unicorn/prefer-ternary
       if (parsedError.success) {
         throw new Error(`${res.status} ${parsedError.data.errorMessage}`);
       } else {

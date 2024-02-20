@@ -1,0 +1,46 @@
+name: Test
+
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    branches:
+      - master
+    types: [opened, synchronize, reopened]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Clone
+        uses: actions/checkout@v4
+      - name: Use Node.js 18.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 18.x
+          registry-url: 'https://npm.pkg.github.com'
+          scope: '@scribelabsai'
+      - name: Install deps
+        run: npm install
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Build lib and tests
+        run: npm run build:lib
+      - name: Run tests
+        run: npm run coverage
+        env:
+          CLIENT_ID: ${{ secrets.CLIENT_ID }}
+          USERNAME: ${{ secrets.USERNAME }}
+          PASSWORD: ${{ secrets.PASSWORD }}
+          OTPCODE: ${{ secrets.OTPCODE }}
+          USER_POOL_ID: ${{ secrets.USER_POOL_ID }}
+          IDENTITY_POOL_ID: ${{ secrets.IDENTITY_POOL_ID }}
+          API_URL: ${{ secrets.API_URL }}
+          REGION: ${{ secrets.REGION }}
+      - name: Publish code coverage
+        uses: paambaati/codeclimate-action@v5.0.0
+        env:
+          CC_TEST_REPORTER_ID: ${{ secrets.CC_TEST_REPORTER_ID }}
+        with:
+          coverageCommand: coverage xml

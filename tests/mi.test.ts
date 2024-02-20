@@ -5,7 +5,7 @@ import { EnvironmentSchema } from '../src/envSchema.js';
 import { ScribeMIClient } from '../src/index.js';
 import { type MITask } from '../src/schema.js';
 
-configureEnv();
+configureEnv({ override: true });
 
 const env = EnvironmentSchema.parse(process.env);
 

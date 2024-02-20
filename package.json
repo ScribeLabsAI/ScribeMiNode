@@ -11,9 +11,9 @@
   "exports": "./dist/index.js",
   "sideEffects": false,
   "scripts": {
-    "build": "tsc",
+    "build:lib": "tsc",
     "check": "tsc --noEmit",
-    "test": "vitest run --logHeapUsage",
+    "test": "npx vitest run --passWithNoTests --logHeapUsage",
     "coverage": "npm run test -- --coverage",
     "changelog": "git log --pretty=\"format:%s\" --decorate=no $(git describe --tags --abbrev=0 @^)..@ > Changelog.md"
   },

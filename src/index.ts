@@ -1,4 +1,4 @@
-import { Auth, RefreshToken, UsernamePassword } from '@scribelabsai/auth';
+import { Auth, RefreshToken, UsernamePassword, type Tokens } from '@scribelabsai/auth';
 import Base64 from 'crypto-js/enc-base64';
 import Hex from 'crypto-js/enc-hex';
 import WordArray from 'crypto-js/lib-typedarrays';
@@ -26,7 +26,7 @@ const ErrorSchema = object({
 export class ScribeMIClient {
   readonly env: Environment;
   readonly authClient: Auth;
-  tokens: Awaited<ReturnType<Auth['getTokens']>> | undefined;
+  tokens: Tokens | undefined;
 
   constructor(env: Environment) {
     this.env = env;
@@ -37,14 +37,22 @@ export class ScribeMIClient {
   }
 
   async authenticate(param: UsernamePassword | RefreshToken) {
-    this.tokens = await this.authClient.getTokens(param);
+    const tokens = await this.authClient.getTokens(param);
+    if ('challengeName' in tokens) {
+      throw new Error('Challenge not supported');
+    }
+    this.tokens = tokens;
   }
 
   async reauthenticate() {
     if (!this.tokens) {
       throw new Error('Must authenticate before reauthenticating');
     }
-    this.tokens = await this.authClient.getTokens({ refreshToken: this.tokens.refreshToken });
+    const tokens = await this.authClient.getTokens({ refreshToken: this.tokens.refreshToken });
+    if ('challengeName' in this.tokens) {
+      throw new Error('Challenge not supported');
+    }
+    this.tokens = tokens;
   }
 
   async callEndpoint<T>(path: string, outputSchema: ZodType<T>, args?: RequestInit): Promise<T> {

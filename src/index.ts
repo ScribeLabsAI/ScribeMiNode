@@ -49,7 +49,7 @@ export class ScribeMIClient {
       throw new Error('Must authenticate before reauthenticating');
     }
     const tokens = await this.authClient.getTokens({ refreshToken: this.tokens.refreshToken });
-    if ('challengeName' in this.tokens) {
+    if ('challengeName' in tokens) {
       throw new Error('Challenge not supported');
     }
     this.tokens = tokens;

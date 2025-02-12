@@ -1,5 +1,4 @@
-import { Auth, Credentials, RefreshToken, UsernamePassword } from '@scribelabsai/auth';
-import { createSignedFetcher } from 'aws-sigv4-fetch';
+import { Auth, RefreshToken, UsernamePassword } from '@scribelabsai/auth';
 import Base64 from 'crypto-js/enc-base64';
 import Hex from 'crypto-js/enc-hex';
 import WordArray from 'crypto-js/lib-typedarrays';
@@ -28,78 +27,42 @@ export class ScribeMIClient {
   readonly env: Environment;
   readonly authClient: Auth;
   tokens: Awaited<ReturnType<Auth['getTokens']>> | undefined;
-  userId: string | undefined;
-  credentials: Credentials | undefined;
-  fetch: typeof fetch | undefined;
 
   constructor(env: Environment) {
     this.env = env;
     this.authClient = new Auth({
       clientId: env.CLIENT_ID,
       userPoolId: env.USER_POOL_ID,
-      identityPoolId: env.IDENTITY_POOL_ID,
     });
   }
 
   async authenticate(param: UsernamePassword | RefreshToken) {
     this.tokens = await this.authClient.getTokens(param);
-    if ('challengeName' in this.tokens) {
-      throw new Error('Challenge not supported');
-    }
-    this.userId = await this.authClient.getFederatedId(this.tokens.idToken);
-    this.credentials = await this.authClient.getFederatedCredentials(
-      this.userId,
-      this.tokens.idToken
-    );
-    this.fetch = createSignedFetcher({
-      service: 'execute-api',
-      region: 'eu-west-2',
-      credentials: {
-        accessKeyId: this.credentials.AccessKeyId,
-        secretAccessKey: this.credentials.SecretKey,
-        sessionToken: this.credentials.SessionToken,
-      },
-    });
   }
 
   async reauthenticate() {
-    if (!this.tokens || !this.userId) {
+    if (!this.tokens) {
       throw new Error('Must authenticate before reauthenticating');
     }
-    if ('challengeName' in this.tokens) {
-      throw new Error('Challenge not supported');
-    }
     this.tokens = await this.authClient.getTokens({ refreshToken: this.tokens.refreshToken });
-    if ('challengeName' in this.tokens) {
-      throw new Error('Challenge not supported');
-    }
-    this.credentials = await this.authClient.getFederatedCredentials(
-      this.userId,
-      this.tokens.idToken
-    );
-    this.fetch = createSignedFetcher({
-      service: 'execute-api',
-      region: 'eu-west-2',
-      credentials: {
-        accessKeyId: this.credentials.AccessKeyId,
-        secretAccessKey: this.credentials.SecretKey,
-        sessionToken: this.credentials.SessionToken,
-      },
-    });
   }
 
   async callEndpoint<T>(path: string, outputSchema: ZodType<T>, args?: RequestInit): Promise<T> {
-    if (!this.fetch || !this.credentials) {
+    if (!this.tokens) {
       throw new Error('Not authenticated');
     }
-    if (this.credentials.Expiration < new Date()) {
-      await this.reauthenticate();
-    }
-    const res = await this.fetch(`https://${this.env.API_URL}${path}`, args);
+    const res = await fetch(`https://${this.env.API_URL}${path}`, {
+      ...args,
+      headers: {
+        ...args?.headers,
+        Authorization: this.tokens.accessToken,
+      },
+    });
     if (res.status === 200) {
       return outputSchema.parse(await res.json());
     } else {
-      const parsedError = ErrorSchema.safeParse(await res.json());
+      const response = await res.json();
+      const parsedError = ErrorSchema.safeParse(response);
       // eslint-disable-next-line unicorn/prefer-ternary
       if (parsedError.success) {
         throw new Error(`${res.status} ${parsedError.data.errorMessage}`);
@@ -160,7 +123,7 @@ export class ScribeMIClient {
 
   async submitTask(
     file: Buffer,
-    props: { filetype: MIFileType; filename?: string; companyname?: string }
+    props: { filetype: MIFileType; filename: string; companyname?: string }
   ) {
     const md5checksum = Base64.stringify(MD5(WordArray.create(file)));
     const { jobid, url } = await this.callEndpoint('/tasks', PostSubmitMIOutputSchema, {

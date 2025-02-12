@@ -72,7 +72,7 @@ describe('endpoints can be called', () => {
   it('submitTask', async () => {
     await expect(
       (async () => {
-        jobid = await client.submitTask(testFile, { filetype: 'pdf' });
+        jobid = await client.submitTask(testFile, { filetype: 'pdf', filename: 'Test file.pdf' });
       })()
     ).resolves.not.toThrow();
   });

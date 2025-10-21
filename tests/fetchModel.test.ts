@@ -1,6 +1,6 @@
 import { config as configureEnv } from 'dotenv';
 import { describe, expect, it, vi } from 'vitest';
-import { EnvironmentSchema } from '../src/env-schema.js';
+import { EnvironmentSchema } from '../src/envSchema.js';
 import { ScribeMIClient } from '../src/index.js';
 import type { MIModel, MITask } from '../src/schema.js';
 

@@ -19,6 +19,9 @@
   },
   "author": "Alex Bostock <alex@scribelabs.ai>",
   "license": "MIT License",
+  "repository": {
+    "url": "https://github.com/ScribeLabsAI/ScribeMINode"
+  },
   "publishConfig": {
     "registry": "https://registry.npmjs.org/"
   },

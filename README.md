@@ -19,7 +19,6 @@ const EnvironmentSchema = object({
   API_URL: string(),
   USER_POOL_ID: string(),
   CLIENT_ID: string(),
-  REGION: string(),
 });
 ```
 
@@ -34,7 +33,6 @@ import { ScribeMIClient } from '@scribelabsai/mi';
 
 const client = new ScribeMIClient({
   API_URL: 'mi.scribelabs.ai/v2',
-  REGION: 'eu-west-2',
   USER_POOL_ID: 'Contact Scribe for authentication details',
   CLIENT_ID: 'Contact Scribe for authentication details',
 });

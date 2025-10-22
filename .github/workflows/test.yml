@@ -33,9 +33,7 @@ jobs:
           PASSWORD: ${{ secrets.PASSWORD }}
           OTPCODE: ${{ secrets.OTPCODE }}
           USER_POOL_ID: ${{ secrets.USER_POOL_ID }}
-          IDENTITY_POOL_ID: ${{ secrets.IDENTITY_POOL_ID }}
           API_URL: ${{ secrets.API_URL }}
-          REGION: ${{ secrets.REGION }}
       - name: Publish code coverage
         uses: paambaati/codeclimate-action@v6.0.0
         env:

@@ -4,7 +4,6 @@ export const EnvironmentSchema = object({
   API_URL: string(),
   USER_POOL_ID: string(),
   CLIENT_ID: string(),
-  REGION: string(),
 });
 
 export type Environment = zinfer<typeof EnvironmentSchema>;

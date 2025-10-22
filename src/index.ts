@@ -1,8 +1,8 @@
 import { Auth, RefreshToken, UsernamePassword, type Tokens } from '@scribelabsai/auth';
-import Base64 from 'crypto-js/enc-base64';
-import Hex from 'crypto-js/enc-hex';
-import WordArray from 'crypto-js/lib-typedarrays';
-import MD5 from 'crypto-js/md5';
+import Base64 from 'crypto-js/enc-base64/index.js';
+import Hex from 'crypto-js/enc-hex/index.js';
+import WordArray from 'crypto-js/lib-typedarrays/index.js';
+import MD5 from 'crypto-js/md5/index.js';
 import { object, string, type ZodType } from 'zod';
 import { type Environment } from './envSchema.js';
 import {

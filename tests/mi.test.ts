@@ -60,13 +60,13 @@ describe('error handling', () => {
 
 describe('endpoints can be called', () => {
   const client = new ScribeMIClient(env);
-  let testFile: Buffer;
+  let testFile: ArrayBuffer;
   let jobid = '';
   let task: MITask;
 
   beforeAll(async () => {
     await client.authenticate({ username, password });
-    testFile = await readFile('tests/assets/test-pdf.pdf');
+    testFile = (await readFile('tests/assets/test-pdf.pdf')).buffer;
   });
 
   it('submitTask', async () => {

@@ -130,7 +130,7 @@ export class ScribeMIClient {
   }
 
   async submitTask(
-    file: Buffer,
+    file: ArrayBuffer,
     props: { filetype: MIFileType; filename: string; companyname?: string }
   ) {
     const md5checksum = Base64.stringify(MD5(WordArray.create(file)));

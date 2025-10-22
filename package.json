@@ -1,6 +1,6 @@
 {
   "name": "@scribelabsai/mi",
-  "version": "1.0.2",
+  "version": "2.0.0",
   "description": "SDK to access Scribe's MI API.",
   "type": "module",
   "main": "./dist/index.js",
